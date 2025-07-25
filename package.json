@@ -1,0 +1,20 @@
+{
+  "name": "discord-shipstalker-bot",
+  "version": "1.0.0",
+  "description": "A Discord bot that displays a ship's current position and a static map image.",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.0"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "mapbox"
+  ],
+  "author": "oceandatatools.org",
+  "license": "MIT"
+}
