@@ -54,7 +54,7 @@ async function getLatestPosition(ship) {
     const res = await fetch(url);
     const data = await res.json();
 
-    const latest = data['features'][5];
+    const latest = data['features'][6];
     console.log("latest:", latest)
 
     return {
@@ -105,18 +105,22 @@ client.on('messageCreate', async (message) => {
   // Set the new cooldown time for this command
   globalCooldowns.set(command, now);
 
-  try {
-    if (message.content === '!falkor' || message.content === '!everyship') {
-      positions.push(await getLatestPosition('falkor'));
-    }
+  if (message.content === '!falkor' || message.content === '!everyship') {
+    try {
+        positions.push(await getLatestPosition('falkor'));
+    } catch (err) {
+      console.error(err);
+      await message.channel.send('⚠️ Failed to fetch position for R/V Falkor (too).');
+    }    
+  }
 
-    if (message.content === '!nautilus' || message.content === '!everyship') {
+  if (message.content === '!nautilus' || message.content === '!everyship') {
+    try {
       positions.push(await getLatestPosition('nautilus'));
+    } catch (err) {
+      console.error(err);
+      await message.channel.send('⚠️ Failed to fetch position for E/V Nautilus.');
     }
-
-  } catch (err) {
-    console.error(err);
-    await message.channel.send('⚠️ Failed to fetch ship position.');
   }
 
   for (const position of positions) {
