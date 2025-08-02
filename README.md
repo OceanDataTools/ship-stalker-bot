@@ -17,7 +17,8 @@ A simple Discord bot to display the positions of research vessels as a static Ma
 ...hopefully more to come.
 
 #### Command List
+- `!help` --> show list of available commands
+- `!everyship` --> shortcut for calling all of individual ship commands
 - `!falkor` --> show R/V Falkor's position
 - `!nautilus` --> show E/V Nautilus's postion
 - `!okeanos` --> show NOAA Ship Okeanos Explorer's postion
-- `!everyship` --> shortcut for calling all of individual ship commands
