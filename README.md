@@ -13,9 +13,11 @@ A simple Discord bot to display the positions of research vessels as a static Ma
 #### Current Vehicle List:
 - R/V Falkor (too) --> Schmidt Ocean Institute
 - E/V Nautilus --> Ocean Exploration Trust
+- NOAA Ship Okeanos Explorer --> NOAA
 ...hopefully more to come.
 
 #### Command List
 - `!falkor` --> show R/V Falkor's position
 - `!nautilus` --> show E/V Nautilus's postion
+- `!okeanos` --> show NOAA Ship Okeanos Explorer's postion
 - `!everyship` --> shortcut for calling all of individual ship commands

@@ -14,6 +14,9 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const ZOOM = 5;
 
+const validCommands = new Set(['!everyship', '!falkor', '!okeanos', '!nautilus', ]);
+
+
 function formatSecondsToHHMMSS(seconds) {
   // const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
@@ -26,7 +29,6 @@ function formatSecondsToHHMMSS(seconds) {
   // return `${paddedHrs}:${paddedMins}:${paddedSecs}`;
   return `${paddedMins}:${paddedSecs}`;
 }
-
 
 async function getLatestPosition(ship) {
 
@@ -49,8 +51,24 @@ async function getLatestPosition(ship) {
     };
   }
 
+  async function _okeanosPosition() {
+    const url = 'https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/Okeanos_Explorer_Position/FeatureServer/0/query?where=1%3D1&f=pgeojson'
+    const res = await fetch(url);
+    const data = await res.json();
+
+    let latest = data['features'][0];
+    let latestTime = new Date().toISOString();
+
+    return {
+      symbol: '🌀',
+      vessel: 'NOAA Ship Okeanos Explorer',
+      lat: latest.geometry.coordinates[1].toFixed(6),
+      lng: latest.geometry.coordinates[0].toFixed(6),
+      timestamp: latestTime
+    };
+  }
+
   async function _nautilusPosition() {
-    //const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/Nautilus_position/MapServer/0/query?where=1=1&f=json'
     const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/vehicle_positions_view_only/FeatureServer/0/query?where=1=1&f=geojson'
     const res = await fetch(url);
     const data = await res.json();
@@ -71,6 +89,10 @@ async function getLatestPosition(ship) {
     return await _falkorPosition()
   }
 
+  if (ship == 'okeanos'){
+    return await _okeanosPosition()
+  }
+
   if (ship == 'nautilus'){
     return await _nautilusPosition()
   }
@@ -87,7 +109,7 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
   const command = message.content.toLowerCase();
-  if (command !== '!falkor' && command !== '!nautilus' && command !== '!everyship') return;
+  if (!validCommands.has(command)) return;
 
   let positions = []
 
@@ -108,6 +130,15 @@ client.on('messageCreate', async (message) => {
   if (message.content === '!falkor' || message.content === '!everyship') {
     try {
         positions.push(await getLatestPosition('falkor'));
+    } catch (err) {
+      console.error(err);
+      await message.channel.send('⚠️ Failed to fetch position for R/V Falkor (too).');
+    }    
+  }
+
+  if (message.content === '!okeanos' || message.content === '!everyship') {
+    try {
+        positions.push(await getLatestPosition('okeanos'));
     } catch (err) {
       console.error(err);
       await message.channel.send('⚠️ Failed to fetch position for R/V Falkor (too).');
