@@ -1,6 +1,10 @@
-<img src="avatar.png" alt="Logo" height="100" />
+<p align="center">
+  <img src="avatar.png" alt="Logo" height="200" />
+</p>
+
 ## ShipStalker
-#### Simple Discord bot to display the positions of research vessels as a static MapBox image
+
+#### A simple Discord bot to display the positions of research vessels as a static MapBox image
 
 #### Current Vehicle List:
 - R/V Falkor (too) --> Schmidt Ocean Institute
