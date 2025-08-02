@@ -16,7 +16,7 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const ZOOM = 5;
 
-const validCommands = new Set(['!everyship', '!falkor', '!okeanos', '!nautilus']);
+const validCommands = new Set(['!everyship', ...Object.keys(shipHandlers).map(k => `!${k}`)]);
 
 function formatSecondsToHHMMSS(seconds) {
   const mins = Math.floor(seconds / 60);
@@ -94,11 +94,10 @@ client.on('messageCreate', async (message) => {
 
   const ships = [];
 
-  if (command === '!everyship') {
-    ships.push('falkor', 'okeanos', 'nautilus');
-  } else {
-    ships.push(command.replace('!', ''));
-  }
+  const ships =
+  command === '!everyship'
+    ? Object.keys(shipHandlers)
+    : [command.slice(1)]; // removes '!' prefix
 
   for (const ship of ships) {
     try {
