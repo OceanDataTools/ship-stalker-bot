@@ -92,8 +92,6 @@ client.on('messageCreate', async (message) => {
   }
   globalCooldowns.set(command, now);
 
-  const ships = [];
-
   const ships =
   command === '!everyship'
     ? Object.keys(shipHandlers)
