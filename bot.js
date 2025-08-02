@@ -50,44 +50,45 @@ async function getLatestPosition(ship) {
   }
 
   async function _nautilusLatestPosition() {
-    const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/Nautilus_position/MapServer/0/query?where=1=1&f=json'
+    //const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/Nautilus_position/MapServer/0/query?where=1=1&f=json'
+    const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/vehicle_positions_view_only/FeatureServer/0/query?where=1=1&f=geojson'
     const res = await fetch(url);
     const data = await res.json();
 
-    let latest = null;
-    let latestTime = null;
+    let latest = data['features'][4];
+    let latestTime = new Date().toISOString();
 
-    for (const f of data['features']) {
-      if (!f) continue;
+    // for (const f of data['features']) {
+    //   if (!f) continue;
 
-      const ts = f.attributes?.timestamp;
-      const x = f.geometry?.x;
-      const y = f.geometry?.y;
+    //   const ts = f.attributes?.timestamp;
+    //   const x = f.geometry?.x;
+    //   const y = f.geometry?.y;
 
       // Check geometry is valid
-      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    //   if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
 
       // Check timestamp is valid ISO8601
-      const parsed = new Date(ts);
-      if (!ts || isNaN(parsed)) continue;
+    //   const parsed = new Date(ts);
+    //   if (!ts || isNaN(parsed)) continue;
 
       // First valid feature or newer than current latest
-      if (!latestTime || parsed > latestTime) {
-        latest = f;
-        latestTime = parsed;
-      }
-    }
+    //   if (!latestTime || parsed > latestTime) {
+    //     latest = f;
+    //     latestTime = parsed;
+    //   }
+    // }
 
-    if (!latest) {
-      throw new Error('No valid feature with geometry and timestamp.');
-    }
+    // if (!latest) {
+    //   throw new Error('No valid feature with geometry and timestamp.');
+    // }
 
     return {
       symbol: '🧭',
       vessel: 'E/V Nautilus',
-      lat: latest.geometry.y.toFixed(6),
-      lng: latest.geometry.x.toFixed(6),
-      timestamp: latest.attributes.timestamp
+      lat: latest.geometry.coordinates[1].toFixed(6),
+      lng: latest.geometry.coordinates[0].toFixed(6),
+      timestamp: latestTime
     };
   }
 
