@@ -49,7 +49,7 @@ async function getLatestPosition(ship) {
     };
   }
 
-  async function _nautilusLatestPosition() {
+  async function _nautilusPosition() {
     //const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/Nautilus_position/MapServer/0/query?where=1=1&f=json'
     const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/vehicle_positions_view_only/FeatureServer/0/query?where=1=1&f=geojson'
     const res = await fetch(url);
@@ -57,31 +57,6 @@ async function getLatestPosition(ship) {
 
     let latest = data['features'][4];
     let latestTime = new Date().toISOString();
-
-    // for (const f of data['features']) {
-    //   if (!f) continue;
-
-    //   const ts = f.attributes?.timestamp;
-    //   const x = f.geometry?.x;
-    //   const y = f.geometry?.y;
-
-      // Check geometry is valid
-    //   if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-
-      // Check timestamp is valid ISO8601
-    //   const parsed = new Date(ts);
-    //   if (!ts || isNaN(parsed)) continue;
-
-      // First valid feature or newer than current latest
-    //   if (!latestTime || parsed > latestTime) {
-    //     latest = f;
-    //     latestTime = parsed;
-    //   }
-    // }
-
-    // if (!latest) {
-    //   throw new Error('No valid feature with geometry and timestamp.');
-    // }
 
     return {
       symbol: '🧭',
@@ -97,7 +72,7 @@ async function getLatestPosition(ship) {
   }
 
   if (ship == 'nautilus'){
-    return await _nautilusLatestPosition()
+    return await _nautilusPosition()
   }
 
   return null
