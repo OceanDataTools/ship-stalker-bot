@@ -16,8 +16,6 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const ZOOM = 5;
 
-const validCommands = new Set(['!everyship', ...Object.keys(shipHandlers).map(k => `!${k}`)]);
-
 function formatSecondsToHHMMSS(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -75,6 +73,8 @@ const shipHandlers = {
     };
   },
 };
+
+const validCommands = new Set(['!everyship', ...Object.keys(shipHandlers).map(k => `!${k}`)]);
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
