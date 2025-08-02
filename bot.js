@@ -74,13 +74,23 @@ const shipHandlers = {
   },
 };
 
-const validCommands = new Set(['!everyship', ...Object.keys(shipHandlers).map(k => `!${k}`)]);
+const validCommands = new Set(['!everyship', '!help', ...Object.keys(shipHandlers).map(k => `!${k}`)]);
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
   const command = message.content.toLowerCase();
   if (!validCommands.has(command)) return;
+
+  if (command === '!help') {
+    const shipCommands = [...Object.keys(shipHandlers).map(k => `!${k}`)].join(', ');
+    return message.reply(
+      `🛠️ **Available Commands:**\n` +
+      `- !help — Show this list\n` +
+      `- !everyship — Show all ship positions\n` +
+      `- ${shipCommands} — Individual ship positions`
+    );
+  }
 
   const now = Date.now();
   if (globalCooldowns.has(command)) {
