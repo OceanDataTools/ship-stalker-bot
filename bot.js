@@ -1,109 +1,80 @@
-// bot.js
-
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
+const COOLDOWN_TIME = 600_000; // 10 minutes
 const globalCooldowns = new Map();
-const COOLDOWN_TIME = 600 * 1000; // 5 minute cooldown
 
 const WIDTH = 1280;
 const HEIGHT = 720;
 const ZOOM = 5;
 
-const validCommands = new Set(['!everyship', '!falkor', '!okeanos', '!nautilus', ]);
-
+const validCommands = new Set(['!everyship', '!falkor', '!okeanos', '!nautilus']);
 
 function formatSecondsToHHMMSS(seconds) {
-  // const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
+  const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-
-  // const paddedHrs = hrs.toString().padStart(2, '0');
-  const paddedMins = mins.toString().padStart(2, '0');
-  const paddedSecs = secs.toString().padStart(2, '0');
-
-  // return `${paddedHrs}:${paddedMins}:${paddedSecs}`;
-  return `${paddedMins}:${paddedSecs}`;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-async function getLatestPosition(ship) {
+async function generateMap({ lat, lng }) {
+  return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+ff0000(${lng},${lat})/${lng},${lat},${ZOOM}/${WIDTH}x${HEIGHT}?access_token=${process.env.MAPBOX_TOKEN}`;
+}
 
-  async function _falkorPosition() {
+// Ship data fetchers
+const shipHandlers = {
+  falkor: async () => {
     const url = 'https://soi-vessel-tracker-default-rtdb.firebaseio.com/FKt5/users.json?orderBy="$key"&limitToLast=1';
     const res = await fetch(url);
     const data = await res.json();
-
-    const latestKey = Object.keys(data)[0];
-    const latest = data[latestKey];
-    console.log("latest :", latest)
+    const latest = data[Object.keys(data)[0]].FKt_5min_location;
 
     return {
       symbol: '🐉',
       vessel: 'R/V Falkor (too)',
-      lat: latest.FKt_5min_location.latitude.toFixed(6),
-      lng: latest.FKt_5min_location.longitude.toFixed(6),
-      // spd: latest.FKt_5min_location.speed,
-      timestamp: latest.FKt_5min_location.influxtime,
+      lat: latest.latitude.toFixed(6),
+      lng: latest.longitude.toFixed(6),
+      timestamp: latest.influxtime,
     };
-  }
+  },
 
-  async function _okeanosPosition() {
-    const url = 'https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/Okeanos_Explorer_Position/FeatureServer/0/query?where=1%3D1&f=pgeojson'
+  okeanos: async () => {
+    const url = 'https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/Okeanos_Explorer_Position/FeatureServer/0/query?where=1%3D1&f=pgeojson';
     const res = await fetch(url);
     const data = await res.json();
-
-    let latest = data['features'][0];
-    let latestTime = new Date().toISOString();
+    const latest = data.features[0];
 
     return {
       symbol: '🌀',
       vessel: 'NOAA Ship Okeanos Explorer',
       lat: latest.geometry.coordinates[1].toFixed(6),
       lng: latest.geometry.coordinates[0].toFixed(6),
-      timestamp: latestTime
+      timestamp: new Date().toISOString(),
     };
-  }
+  },
 
-  async function _nautilusPosition() {
-    const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/vehicle_positions_view_only/FeatureServer/0/query?where=1=1&f=geojson'
+  nautilus: async () => {
+    const url = 'https://maps.ccom.unh.edu/server/rest/services/Hosted/vehicle_positions_view_only/FeatureServer/0/query?where=1=1&f=geojson';
     const res = await fetch(url);
     const data = await res.json();
-
-    let latest = data['features'][4];
-    let latestTime = new Date().toISOString();
+    const latest = data.features[4];
 
     return {
       symbol: '🧭',
       vessel: 'E/V Nautilus',
       lat: latest.geometry.coordinates[1].toFixed(6),
       lng: latest.geometry.coordinates[0].toFixed(6),
-      timestamp: latestTime
+      timestamp: new Date().toISOString(),
     };
-  }
-
-  if (ship == 'falkor'){
-    return await _falkorPosition()
-  }
-
-  if (ship == 'okeanos'){
-    return await _okeanosPosition()
-  }
-
-  if (ship == 'nautilus'){
-    return await _nautilusPosition()
-  }
-
-  return null
-}
-
-async function generateMap({ lat, lng }) {
-  return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+ff0000(${lng},${lat})/${lng},${lat},${ZOOM}/${WIDTH}x${HEIGHT}?access_token=${process.env.MAPBOX_TOKEN}`;
-
-}
+  },
+};
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
@@ -111,51 +82,27 @@ client.on('messageCreate', async (message) => {
   const command = message.content.toLowerCase();
   if (!validCommands.has(command)) return;
 
-  let positions = []
-
   const now = Date.now();
-
-  // Check global cooldown for this command
   if (globalCooldowns.has(command)) {
-    const expirationTime = globalCooldowns.get(command) + COOLDOWN_TIME;
-    if (now < expirationTime) {
-      const timeLeft = ((expirationTime - now) / 1000).toFixed(1);
+    const expires = globalCooldowns.get(command) + COOLDOWN_TIME;
+    if (now < expires) {
+      const timeLeft = ((expires - now) / 1000);
       return message.reply(`⏳ Please wait ${formatSecondsToHHMMSS(timeLeft)} before using "${command}" again.`);
     }
   }
-
-  // Set the new cooldown time for this command
   globalCooldowns.set(command, now);
 
-  if (message.content === '!falkor' || message.content === '!everyship') {
-    try {
-        positions.push(await getLatestPosition('falkor'));
-    } catch (err) {
-      console.error(err);
-      await message.channel.send('⚠️ Failed to fetch position for R/V Falkor (too).');
-    }    
+  const ships = [];
+
+  if (command === '!everyship') {
+    ships.push('falkor', 'okeanos', 'nautilus');
+  } else {
+    ships.push(command.replace('!', ''));
   }
 
-  if (message.content === '!okeanos' || message.content === '!everyship') {
+  for (const ship of ships) {
     try {
-        positions.push(await getLatestPosition('okeanos'));
-    } catch (err) {
-      console.error(err);
-      await message.channel.send('⚠️ Failed to fetch position for R/V Falkor (too).');
-    }    
-  }
-
-  if (message.content === '!nautilus' || message.content === '!everyship') {
-    try {
-      positions.push(await getLatestPosition('nautilus'));
-    } catch (err) {
-      console.error(err);
-      await message.channel.send('⚠️ Failed to fetch position for E/V Nautilus.');
-    }
-  }
-
-  for (const position of positions) {
-    try {
+      const position = await shipHandlers[ship]();
       const mapUrl = await generateMap(position);
 
       const embed = new EmbedBuilder()
@@ -167,10 +114,9 @@ client.on('messageCreate', async (message) => {
       await message.channel.send({ embeds: [embed] });
     } catch (err) {
       console.error(err);
-      await message.channel.send('⚠️ Failed to render ship position.');
+      await message.channel.send(`⚠️ Failed to fetch position for ${shipHandlers[ship]?.().vessel ?? ship}.`);
     }
-  }  
-
+  }
 });
 
 client.once('ready', () => {
