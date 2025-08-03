@@ -16,6 +16,10 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const ZOOM = 5;
 
+const permissions = 2048; // Send Messages
+const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&permissions=${permissions}&scope=bot`;
+
+
 function formatSecondsToHHMMSS(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -128,6 +132,7 @@ client.on('messageCreate', async (message) => {
 
 client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
+  console.log(`🔗 Invite the bot to your server:\n${inviteUrl}`);
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
