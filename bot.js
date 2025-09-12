@@ -266,11 +266,9 @@ client.login(process.env.DISCORD_BOT_TOKEN);
 process.on('SIGINT', async () => {
   console.log('Caught SIGINT, shutting down...');
   await client.destroy();
-  process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('Caught SIGTERM, shutting down...');
   await client.destroy();
-  process.exit(0);
 });
